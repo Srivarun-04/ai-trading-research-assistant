@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     # OpenRouter / LLM
     # ------------------------------------------------------------------
     openrouter_api_key: str = ""
-    openrouter_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    openrouter_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     openrouter_site_name: str = "AI Trading Research Assistant"
     openrouter_site_url: str = "https://ai-trading-research.local"

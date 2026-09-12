@@ -7,7 +7,14 @@ from pydantic import BaseModel, Field
 # Shared
 # ---------------------------------------------------------------------------
 
-SourceType = Literal["user_provided", "ai_inferred", "ai_suggested", "missing", "user_confirmed"]
+SourceType = Literal[
+    "user_provided",
+    "ai_inferred",
+    "ai_suggested",
+    "missing",
+    "user_confirmed",
+    "system_default",
+]
 
 
 class SourcedValue(BaseModel):
@@ -22,7 +29,7 @@ class SourcedValue(BaseModel):
 # ---------------------------------------------------------------------------
 
 class AnalyzeRequest(BaseModel):
-    question: str = Field(..., min_length=3, max_length=1000)
+    question: str = Field(..., min_length=1, max_length=1000)
 
 
 class ClarificationOption(BaseModel):
@@ -35,6 +42,7 @@ class ClarificationQuestion(BaseModel):
     field: str          # e.g. "threshold"
     label: str          # e.g. 'Define "sharp fall"'
     description: str    # supporting text
+    why_it_matters: Optional[str] = None  # Brief explanation of why this parameter matters
     options: list[ClarificationOption]
     allows_custom: bool = True
     custom_label: Optional[str] = None   # label for the custom input
@@ -54,5 +62,7 @@ class AnalysisResult(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    analysis: AnalysisResult
-    needs_clarification: bool
+    is_research_question: bool = True
+    message: Optional[str] = None
+    analysis: Optional[AnalysisResult] = None
+    needs_clarification: bool = False

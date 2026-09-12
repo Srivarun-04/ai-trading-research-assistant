@@ -8,6 +8,7 @@ constructs a fully-validated ExperimentDefinition.
 from __future__ import annotations
 import logging
 from datetime import datetime
+import re
 
 from ..schemas.experiment import ExperimentDefinition, BuildExperimentRequest, BuildExperimentResponse
 
@@ -45,20 +46,29 @@ def build_experiment(request: BuildExperimentRequest) -> BuildExperimentResponse
     if errors:
         raise ValueError("; ".join(errors))
 
-    # Parse numeric values
-    try:
-        threshold_pct = float(threshold_str)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        raise ValueError(f"threshold_pct must be a number, got: {threshold_str!r}")
+    # Parse numeric values cleanly (stripping any extraneous %, "days", etc.)
+    def _parse_float(raw: str | None, field_name: str) -> float:
+        if raw is None:
+            raise ValueError(f"'{field_name}' is required but was not provided.")
+        cleaned = re.search(r"[-+]?\d*\.?\d+", str(raw))
+        if not cleaned:
+            raise ValueError(f"{field_name} must be a number, got: {raw!r}")
+        return float(cleaned.group(0))
+
+    def _parse_int(raw: str | None, field_name: str) -> int:
+        if raw is None:
+            raise ValueError(f"'{field_name}' is required but was not provided.")
+        cleaned = re.search(r"[-+]?\d+", str(raw))
+        if not cleaned:
+            raise ValueError(f"{field_name} must be an integer, got: {raw!r}")
+        return int(cleaned.group(0))
+
+    threshold_pct = _parse_float(threshold_str, "threshold_pct")
+    holding_period_days = _parse_int(holding_str, "holding_period_days")
 
     try:
-        holding_period_days = int(holding_str)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        raise ValueError(f"holding_period_days must be an integer, got: {holding_str!r}")
-
-    try:
-        transaction_cost_pct = float(tc_str)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
+        transaction_cost_pct = _parse_float(tc_str, "transaction_cost_pct")
+    except ValueError:
         transaction_cost_pct = 0.10
 
     # Validate dates
